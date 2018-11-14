@@ -14,7 +14,8 @@ test: ## Run test
 	$(GO) test -race $(TEST)
 
 build: ## Build
-	$(GO) build -o $(BUILD)/panalysis
+	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building$(RESET)"
+	./misc/build $(VERSION) $(REVISION)
 
 run : ## Run
 	$(GO) run main.go cli.go misc/sample.conf
@@ -24,3 +25,7 @@ lint: ## Exec golint
 depsdev: ## Installing dependencies for development
 	$(GO) get github.com/golang/lint/golint
 	$(GO) get -u github.com/tcnksm/ghr
+
+ghr: ## Upload to Github releases without token check
+	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Releasing for Github$(RESET)"
+	ghr -u pyama86 v$(VERSION)-$(REVISION) pkg
