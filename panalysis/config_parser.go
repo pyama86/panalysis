@@ -32,43 +32,43 @@ func init() {
 	regSectionEnd, _ = regexp.Compile(patternSectionEnd)
 }
 
-func (p *ConfigParser) parse(parentSection interface{}, currentSection interface{}, currentSectionName, currentSectionValue string) (interface{}, error) {
+func (p *ConfigParser) parse(parentSection interface{}, sec interface{}, secName, secVal string) (interface{}, error) {
 	var result []interface{}
-	var section int
+	var secCnt int
 	for p.s.Scan() {
 		line := p.s.Text()
 
 		if regComment.MatchString(line) {
 			continue
 		} else if res := regSectionStart.FindAllStringSubmatch(line, -1); res != nil {
-			section++
+			secCnt++
 			// 再帰処理
-			if currentSection != nil {
-				localSectionName := res[0][1]
-				localSectionValue := res[0][2]
+			if sec != nil {
+				localSecName := res[0][1]
+				localSecVal := res[0][2]
 				c := map[string]map[string][]interface{}{
-					localSectionName: map[string][]interface{}{
-						localSectionValue: []interface{}{},
+					localSecName: map[string][]interface{}{
+						localSecVal: []interface{}{},
 					},
 				}
 
-				if _, err := p.parse(currentSection, &c, localSectionName, localSectionValue); err != nil {
+				if _, err := p.parse(sec, &c, localSecName, localSecVal); err != nil {
 					return nil, err
 				}
 
-				switch v := currentSection.(type) {
+				switch v := sec.(type) {
 				case map[string]map[string][]interface{}:
-					v[currentSectionName][currentSectionValue] = append(v[currentSectionName][currentSectionValue], c)
+					v[secName][secVal] = append(v[secName][secVal], c)
 				case *map[string]map[string][]interface{}:
-					(*v)[currentSectionName][currentSectionValue] = append((*v)[currentSectionName][currentSectionValue], c)
+					(*v)[secName][secVal] = append((*v)[secName][secVal], c)
 				}
-				section--
+				secCnt--
 			} else {
-				currentSectionName = res[0][1]
-				currentSectionValue = res[0][2]
-				currentSection = map[string]map[string][]interface{}{
-					currentSectionName: map[string][]interface{}{
-						currentSectionValue: nil,
+				secName = res[0][1]
+				secVal = res[0][2]
+				sec = map[string]map[string][]interface{}{
+					secName: map[string][]interface{}{
+						secVal: nil,
 					},
 				}
 			}
@@ -76,22 +76,24 @@ func (p *ConfigParser) parse(parentSection interface{}, currentSection interface
 			if parentSection != nil {
 				return nil, nil
 			} else {
-				section--
-				result = append(result, currentSection)
+				secCnt--
+				result = append(result, sec)
 			}
-			currentSection = nil
+			sec = nil
 		} else if res := regDirective.FindAllStringSubmatch(line, -1); res != nil {
-			switch v := currentSection.(type) {
+			localSecName := res[0][1]
+			localSecVal := res[0][2]
+			switch v := sec.(type) {
 			case map[string]map[string][]interface{}:
-				v[currentSectionName][currentSectionValue] = append(v[currentSectionName][currentSectionValue], map[string]interface{}{res[0][1]: res[0][2]})
+				v[secName][secVal] = append(v[secName][secVal], map[string]interface{}{localSecName: localSecVal})
 			case *map[string]map[string][]interface{}:
-				(*v)[currentSectionName][currentSectionValue] = append((*v)[currentSectionName][currentSectionValue], map[string]interface{}{res[0][1]: res[0][2]})
+				(*v)[secName][secVal] = append((*v)[secName][secVal], map[string]interface{}{localSecName: localSecVal})
 			default:
-				result = append(result, map[string]interface{}{res[0][1]: res[0][2]})
+				result = append(result, map[string]interface{}{localSecName: localSecVal})
 			}
 		}
 	}
-	if section != 0 {
+	if secCnt != 0 {
 		return nil, fmt.Errorf("config format error")
 	}
 	return result, p.s.Err()
