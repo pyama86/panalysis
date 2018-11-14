@@ -12,11 +12,24 @@ const (
 	ExitCodeError int = 1 + iota
 )
 
+var (
+	version   string
+	revision  string
+	goversion string
+	builddate string
+	builduser string
+)
+
 // CLI is the command line object
 type CLI struct {
 	// outStream and errStream are the stdout and stderr
 	// to write message from the CLI.
 	outStream, errStream io.Writer
+}
+
+func printVersion() {
+	fmt.Printf("panalysis version: %s (%s)\n", version, revision)
+	fmt.Printf("build at %s (with %s) by %s\n", builddate, goversion, builduser)
 }
 
 // Run invokes the CLI with the given arguments.
@@ -29,7 +42,7 @@ func (cli *CLI) Run(args []string) int {
 	)
 
 	// Define option flag parse
-	flags := flag.NewFlagSet(Name, flag.ContinueOnError)
+	flags := flag.NewFlagSet("panalysis", flag.ContinueOnError)
 	flags.SetOutput(cli.errStream)
 
 	flags.BoolVar(&json, "json", false, "Json")
@@ -46,7 +59,7 @@ func (cli *CLI) Run(args []string) int {
 
 	// Show version
 	if version {
-		fmt.Fprintf(cli.errStream, "%s version %s\n", Name, Version)
+		printVersion()
 		return ExitCodeOK
 	}
 
