@@ -9,18 +9,26 @@ Analyze the configuration of httpd and make it json
 ```bash
 $ cat httpd.conf | panalysis -c
 =>
-{
-  "VirtualHost": {
-    "172.20.30.50": {
-      "DocumentRoot": "/www/example1",
-      "ServerName": "www.example.com"
+[
+  {
+    "VirtualHost": {
+      "172.20.30.50": [
+        {
+          "DocumentRoot": "/www/example1"
+        },
+        {
+          "ServerName": "www.example.com"
+        }
+      ]
     }
   },
-  "FilesMatch": {
-    "\.(gif|jpe?g|png)$\": {
+  {
+    "FilesMatch": {
+      "\"\\.(gif|jpe?g|png)$\"": null
     }
   }
-}
+]
+
 $ cat httpd.json | panalysis -j
 =>
 <VirtualHost 172.20.30.50>
