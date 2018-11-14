@@ -16,5 +16,8 @@ test: ## Run test
 	$(GO) test -v $(TEST) -timeout=30s -parallel=4
 	$(GO) test -race $(TEST)
 
-build: ## Build server
+build: ## Build
 	$(GO) build -o $(BUILD)/panalysis
+
+run : ## Run
+	$(GO) run main.go cli.go misc/sample.conf

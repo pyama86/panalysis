@@ -1,9 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
+	"log"
+	"os"
+
+	"github.com/pyama86/panalysis/panalysis"
 )
 
 // Exit codes are int values that represent an exit code for a particular error.
@@ -35,7 +40,7 @@ func printVersion() {
 // Run invokes the CLI with the given arguments.
 func (cli *CLI) Run(args []string) int {
 	var (
-		json   bool
+		jsonp  bool
 		config bool
 
 		version bool
@@ -45,8 +50,8 @@ func (cli *CLI) Run(args []string) int {
 	flags := flag.NewFlagSet("panalysis", flag.ContinueOnError)
 	flags.SetOutput(cli.errStream)
 
-	flags.BoolVar(&json, "json", false, "Json")
-	flags.BoolVar(&json, "j", false, "Json(Short)")
+	flags.BoolVar(&jsonp, "json", false, "Json")
+	flags.BoolVar(&jsonp, "j", false, "Json(Short)")
 	flags.BoolVar(&config, "config", false, "Config")
 	flags.BoolVar(&config, "c", false, "Config(Short)")
 
@@ -62,10 +67,31 @@ func (cli *CLI) Run(args []string) int {
 		printVersion()
 		return ExitCodeOK
 	}
+	var fd io.Reader
 
-	_ = json
+	if len(os.Args) < 2 {
+		fd = os.Stdin
+	} else {
+		fp, err := os.Open(os.Args[1])
+		if err != nil {
+			log.Fatal(err)
+		}
+		fd = fp
+		defer fp.Close()
+	}
 
-	_ = config
+	if !jsonp {
+		pn := panalysis.NewConfigParser(fd)
+		r, err := pn.Parse()
+		if err != nil {
+			log.Fatal(err)
+		}
 
+		j, err := json.Marshal(r)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Fprint(os.Stdout, string(j))
+	}
 	return ExitCodeOK
 }
