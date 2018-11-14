@@ -2,6 +2,7 @@ package panalysis
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"regexp"
 )
@@ -33,13 +34,15 @@ func init() {
 
 func (p *ConfigParser) parse(parentSection interface{}, currentSection interface{}, currentSectionName, currentSectionValue string) (interface{}, error) {
 	var result []interface{}
-
+	var section int
 	for p.s.Scan() {
 		line := p.s.Text()
 
 		if regComment.MatchString(line) {
 			continue
 		} else if res := regSectionStart.FindAllStringSubmatch(line, -1); res != nil {
+			section++
+			// 再帰処理
 			if currentSection != nil {
 				localSectionName := res[0][1]
 				localSectionValue := res[0][2]
@@ -48,6 +51,7 @@ func (p *ConfigParser) parse(parentSection interface{}, currentSection interface
 						localSectionValue: map[string]interface{}{},
 					},
 				}
+
 				if _, err := p.parse(currentSection, &c, localSectionName, localSectionValue); err != nil {
 					return nil, err
 				}
@@ -58,7 +62,7 @@ func (p *ConfigParser) parse(parentSection interface{}, currentSection interface
 				case *map[string]map[string]interface{}:
 					(*v)[currentSectionName][currentSectionValue] = c
 				}
-
+				section--
 			} else {
 				currentSectionName = res[0][1]
 				currentSectionValue = res[0][2]
@@ -70,8 +74,9 @@ func (p *ConfigParser) parse(parentSection interface{}, currentSection interface
 			}
 		} else if regSectionEnd.MatchString(line) {
 			if parentSection != nil {
-				return result, nil
+				return nil, nil
 			} else {
+				section--
 				result = append(result, currentSection)
 			}
 			currentSection = nil
@@ -98,6 +103,8 @@ func (p *ConfigParser) parse(parentSection interface{}, currentSection interface
 			}
 		}
 	}
-
+	if section != 0 {
+		return nil, fmt.Errorf("config format error")
+	}
 	return result, p.s.Err()
 }
