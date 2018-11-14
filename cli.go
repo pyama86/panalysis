@@ -68,11 +68,13 @@ func (cli *CLI) Run(args []string) int {
 		return ExitCodeOK
 	}
 	var fd io.Reader
+
 	for 0 < flags.NArg() {
 		arguments = append(arguments, flags.Arg(0))
 		flags.Parse(flags.Args()[1:])
 	}
-	if len(os.Args) < 2 {
+
+	if len(os.Args) <= 2 {
 		fd = os.Stdin
 	} else {
 		fp, err := os.Open(arguments[0])
