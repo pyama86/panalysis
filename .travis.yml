@@ -1,0 +1,14 @@
+language: go
+sudo: required
+  - sudo PATH=$PATH GOPATH=$GOPATH GO="GO111MODULE=on go" make ci
+go:
+  - 1.11
+  - tip
+
+notifications:
+  slack: pepabo:CQkcN0cdvPSJvVsK2D48qYyV
+
+cache:
+  directories:
+    - /go/pkg/mod/cache/download
+    - /go/src/github.com

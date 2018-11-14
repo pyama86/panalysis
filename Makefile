@@ -11,6 +11,7 @@ RESET=\033[0m
 BOLD=\033[1m
 BUILD=tmp/bin
 
+ci: depsdev test lint ## Run test and more...
 test: ## Run test
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
 	$(GO) test -v $(TEST) -timeout=30s -parallel=4
@@ -21,3 +22,9 @@ build: ## Build
 
 run : ## Run
 	$(GO) run main.go cli.go misc/sample.conf
+lint: ## Exec golint
+	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Linting$(RESET)"
+	golint -min_confidence 1.1 -set_exit_status $(TEST)
+depsdev: ## Installing dependencies for development
+	$(GO) get github.com/golang/lint/golint
+	$(GO) get -u github.com/tcnksm/ghr
