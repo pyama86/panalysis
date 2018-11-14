@@ -1,0 +1,266 @@
+[
+  {
+    "ThreadsPerChild": "250"
+  },
+  {
+    "MaxRequestsPerChild": "0"
+  },
+  {
+    "Listen": "80"
+  },
+  {
+    "ServerRoot": "\"/www/Apache22\""
+  },
+  {
+    "DocumentRoot": "\"/THDL/thdl-site\""
+  },
+  {
+    "ServerName": "localhost:80"
+  },
+  {
+    "ServerAdmin": "admin@localhost"
+  },
+  {
+    "ErrorLog": "logs/error.log"
+  },
+  {
+    "LogLevel": "error"
+  },
+  {
+    "LoadModule": "alias_module modules/mod_alias.so"
+  },
+  {
+    "LoadModule": "authz_host_module modules/mod_authz_host.so"
+  },
+  {
+    "LoadModule": "autoindex_module modules/mod_autoindex.so"
+  },
+  {
+    "LoadModule": "dir_module modules/mod_dir.so"
+  },
+  {
+    "LoadModule": "log_config_module modules/mod_log_config.so"
+  },
+  {
+    "LoadModule": "mime_module modules/mod_mime.so"
+  },
+  {
+    "LoadModule": "rewrite_module modules/mod_rewrite.so"
+  },
+  {
+    "LoadModule": "setenvif_module modules/mod_setenvif.so"
+  },
+  {
+    "IfDefine": {
+      "SSL": [
+        {
+          "LoadModule": "ssl_module modules/mod_ssl.so"
+        }
+      ]
+    }
+  },
+  {
+    "DefaultType": "text/plain"
+  },
+  {
+    "IfModule": {
+      "dir_module": [
+        {
+          "DirectoryIndex": "index.html index.php index.aspx"
+        }
+      ]
+    }
+  },
+  {
+    "IndexIgnore": ".htaccess"
+  },
+  {
+    "FilesMatch": {
+      "\"^.ht\"": [
+        {
+          "Order": "allow,deny"
+        },
+        {
+          "Deny": "from all"
+        }
+      ]
+    }
+  },
+  {
+    "Redirect": "/thdl external link: http://localhost"
+  },
+  {
+    "Directory": {
+      "/": [
+        {
+          "Options": "FollowSymLinks"
+        },
+        {
+          "AllowOverride": "all"
+        },
+        {
+          "Order": "deny,allow"
+        },
+        {
+          "Allow": "from all"
+        },
+        {
+          "Satisfy": "all"
+        }
+      ]
+    }
+  },
+  {
+    "Directory": {
+      "\"/THDL/thdl-site\"": [
+        {
+          "Options": "Indexes FollowSymLinks"
+        },
+        {
+          "AllowOverride": "all"
+        },
+        {
+          "Order": "allow,deny"
+        },
+        {
+          "Allow": "from all"
+        }
+      ]
+    }
+  },
+  {
+    "IfModule": {
+      "mime_module": [
+        {
+          "TypesConfig": "conf/mime.types"
+        },
+        {
+          "AddType": "application/x-compress .Z"
+        },
+        {
+          "AddType": "application/x-gzip .gz .tgz"
+        }
+      ]
+    }
+  },
+  {
+    "Include": "conf/extra/httpd-autoindex.conf"
+  },
+  {
+    "Include": "conf/extra/httpd-languages.conf"
+  },
+  {
+    "Include": "conf/extra/httpd-info.conf"
+  },
+  {
+    "Include": "conf/extra/httpd-manual.conf"
+  },
+  {
+    "Include": "conf/extra/httpd-default.conf"
+  },
+  {
+    "Include": "conf/Suite-extra/components.conf"
+  },
+  {
+    "IfModule": {
+      "!php5_module": [
+        {
+          "IfModule": {
+            "!php4_module": [
+              {
+                "Location": {
+                  "/": [
+                    {
+                      "FilesMatch": {
+                        "\".php[45]?$\"": [
+                          {
+                            "Order": "allow,deny"
+                          },
+                          {
+                            "Deny": "from all"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "LoadFile": "\"C:/www/php5/php5ts.dll\""
+  },
+  {
+    "LoadModule": "php5_module \"C:/www/php5/php5apache2.dll\""
+  },
+  {
+    "IfModule": {
+      "php5_module": [
+        {
+          "Location": {
+            "/": [
+              {
+                "AddType": "text/html .php .phps"
+              },
+              {
+                "AddHandler": "application/x-httpd-php .php"
+              },
+              {
+                "AddHandler": "application/x-httpd-php-source .phps"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "IfModule": {
+      "ssl_module": [
+        {
+          "Include": "conf/extra/httpd-ssl.conf"
+        },
+        {
+          "SSLRandomSeed": "startup builtin"
+        },
+        {
+          "SSLRandomSeed": "connect builtin"
+        }
+      ]
+    }
+  },
+  {
+    "IfModule": {
+      "mod_alias.c": [
+        {
+          "Alias": "/phpMyAdmin \"C:/www/phpMyAdmin\""
+        }
+      ]
+    }
+  },
+  {
+    "Directory": {
+      "\"C:/www/phpMyAdmin\"": [
+        {
+          "Options": "None"
+        },
+        {
+          "AllowOverride": "None"
+        },
+        {
+          "order": "deny,allow"
+        },
+        {
+          "deny": "from all"
+        },
+        {
+          "allow": "from 127.0.0.1"
+        }
+      ]
+    }
+  }
+]

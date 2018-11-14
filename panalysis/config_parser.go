@@ -2,6 +2,7 @@ package panalysis
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"regexp"
@@ -96,5 +97,9 @@ func (p *ConfigParser) parse(parentSection interface{}, sec interface{}, secName
 	if secCnt != 0 {
 		return nil, fmt.Errorf("config format error")
 	}
-	return result, p.s.Err()
+	js, err := json.Marshal(result)
+	if err != nil {
+		return nil, err
+	}
+	return string(js), p.s.Err()
 }

@@ -18,7 +18,7 @@ func TestConfigParser_Parse(t *testing.T) {
 
 			name:    "directive",
 			bytes:   []byte(`LoadFile "C:/www/php5/php5ts.dll"`),
-			want:    []interface{}{map[string]interface{}{"LoadFile": "\"C:/www/php5/php5ts.dll\""}},
+			want:    `[{"LoadFile":"\"C:/www/php5/php5ts.dll\""}]`,
 			wantErr: false,
 		},
 		{
@@ -31,23 +31,7 @@ func TestConfigParser_Parse(t *testing.T) {
 	SSLRandomSeed connect builtin
 </IfModule>
 			`),
-			want: []interface{}{
-				map[string]map[string][]interface{}{
-					"IfModule": map[string][]interface{}{
-						"ssl_module": []interface{}{
-							map[string]interface{}{
-								"Include": "conf/extra/httpd-ssl.conf",
-							},
-							map[string]interface{}{
-								"SSLRandomSeed": "startup builtin",
-							},
-							map[string]interface{}{
-								"SSLRandomSeed": "connect builtin",
-							},
-						},
-					},
-				},
-			},
+			want:    "[{\"IfModule\":{\"ssl_module\":[{\"Include\":\"conf/extra/httpd-ssl.conf\"},{\"SSLRandomSeed\":\"startup builtin\"},{\"SSLRandomSeed\":\"connect builtin\"}]}}]",
 			wantErr: false,
 		},
 		{
@@ -65,29 +49,7 @@ func TestConfigParser_Parse(t *testing.T) {
 
 </IfModule>
 			`),
-			want: []interface{}{
-				map[string]map[string][]interface{}{
-					"IfModule": map[string][]interface{}{
-						"php5_module": []interface{}{
-							map[string]map[string][]interface{}{
-								"Location": map[string][]interface{}{
-									"/": []interface{}{
-										map[string]interface{}{
-											"AddType": "text/html .php .phps",
-										},
-										map[string]interface{}{
-											"AddHandler": "application/x-httpd-php .php",
-										},
-										map[string]interface{}{
-											"AddHandler": "application/x-httpd-php-source .phps",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
+			want:    "[{\"IfModule\":{\"php5_module\":[{\"Location\":{\"/\":[{\"AddType\":\"text/html .php .phps\"},{\"AddHandler\":\"application/x-httpd-php .php\"},{\"AddHandler\":\"application/x-httpd-php-source .phps\"}]}}]}}]",
 			wantErr: false,
 		},
 		{

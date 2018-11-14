@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -40,10 +39,10 @@ func printVersion() {
 // Run invokes the CLI with the given arguments.
 func (cli *CLI) Run(args []string) int {
 	var (
-		jsonp  bool
-		config bool
-
-		version bool
+		jsonp     bool
+		config    bool
+		arguments []string
+		version   bool
 	)
 
 	// Define option flag parse
@@ -68,30 +67,32 @@ func (cli *CLI) Run(args []string) int {
 		return ExitCodeOK
 	}
 	var fd io.Reader
-
+	for 0 < flags.NArg() {
+		arguments = append(arguments, flags.Arg(0))
+		flags.Parse(flags.Args()[1:])
+	}
 	if len(os.Args) < 2 {
 		fd = os.Stdin
 	} else {
-		fp, err := os.Open(os.Args[1])
+		fp, err := os.Open(arguments[0])
 		if err != nil {
 			log.Fatal(err)
 		}
 		fd = fp
 		defer fp.Close()
 	}
-
+	var pn panalysis.Parser
 	if !jsonp {
-		pn := panalysis.NewConfigParser(fd)
-		r, err := pn.Parse()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		j, err := json.Marshal(r)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Fprint(os.Stdout, string(j))
+		pn = panalysis.NewConfigParser(fd)
+	} else {
+		pn = panalysis.NewJSONParser(fd)
 	}
+
+	r, err := pn.Parse()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Fprint(os.Stdout, r)
 	return ExitCodeOK
 }
