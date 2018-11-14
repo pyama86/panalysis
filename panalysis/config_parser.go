@@ -46,9 +46,9 @@ func (p *ConfigParser) parse(parentSection interface{}, currentSection interface
 			if currentSection != nil {
 				localSectionName := res[0][1]
 				localSectionValue := res[0][2]
-				c := map[string]map[string]interface{}{
-					localSectionName: map[string]interface{}{
-						localSectionValue: map[string]interface{}{},
+				c := map[string]map[string][]interface{}{
+					localSectionName: map[string][]interface{}{
+						localSectionValue: []interface{}{},
 					},
 				}
 
@@ -57,17 +57,17 @@ func (p *ConfigParser) parse(parentSection interface{}, currentSection interface
 				}
 
 				switch v := currentSection.(type) {
-				case map[string]map[string]interface{}:
-					v[currentSectionName][currentSectionValue] = c
-				case *map[string]map[string]interface{}:
-					(*v)[currentSectionName][currentSectionValue] = c
+				case map[string]map[string][]interface{}:
+					v[currentSectionName][currentSectionValue] = append(v[currentSectionName][currentSectionValue], c)
+				case *map[string]map[string][]interface{}:
+					(*v)[currentSectionName][currentSectionValue] = append((*v)[currentSectionName][currentSectionValue], c)
 				}
 				section--
 			} else {
 				currentSectionName = res[0][1]
 				currentSectionValue = res[0][2]
-				currentSection = map[string]map[string]interface{}{
-					currentSectionName: map[string]interface{}{
+				currentSection = map[string]map[string][]interface{}{
+					currentSectionName: map[string][]interface{}{
 						currentSectionValue: nil,
 					},
 				}
@@ -82,22 +82,10 @@ func (p *ConfigParser) parse(parentSection interface{}, currentSection interface
 			currentSection = nil
 		} else if res := regDirective.FindAllStringSubmatch(line, -1); res != nil {
 			switch v := currentSection.(type) {
-			case map[string]map[string]interface{}:
-				if len(v) > 0 {
-					if v[currentSectionName][currentSectionValue] == nil {
-						v[currentSectionName][currentSectionValue] = map[string]interface{}{res[0][1]: res[0][2]}
-					} else {
-						v[currentSectionName][currentSectionValue].(map[string]interface{})[res[0][1]] = res[0][2]
-					}
-				}
-			case *map[string]map[string]interface{}:
-				if len(*v) > 0 {
-					if (*v)[currentSectionName][currentSectionValue] == nil {
-						(*v)[currentSectionName][currentSectionValue] = map[string]interface{}{res[0][1]: res[0][2]}
-					} else {
-						(*v)[currentSectionName][currentSectionValue].(map[string]interface{})[res[0][1]] = res[0][2]
-					}
-				}
+			case map[string]map[string][]interface{}:
+				v[currentSectionName][currentSectionValue] = append(v[currentSectionName][currentSectionValue], map[string]interface{}{res[0][1]: res[0][2]})
+			case *map[string]map[string][]interface{}:
+				(*v)[currentSectionName][currentSectionValue] = append((*v)[currentSectionName][currentSectionValue], map[string]interface{}{res[0][1]: res[0][2]})
 			default:
 				result = append(result, map[string]interface{}{res[0][1]: res[0][2]})
 			}
