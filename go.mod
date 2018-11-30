@@ -6,6 +6,7 @@ require (
 	github.com/google/go-github v17.0.0+incompatible // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.0.0 // indirect
+	github.com/imdario/mergo v0.3.6
 	github.com/k0kubun/pp v2.3.0+incompatible
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
@@ -20,4 +21,5 @@ require (
 	golang.org/x/oauth2 v0.0.0-20181106182150-f42d05182288 // indirect
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	golang.org/x/tools v0.0.0-20181114163030-2f5a1a7a23cc // indirect
+	gopkg.in/yaml.v2 v2.2.2 // indirect
 )

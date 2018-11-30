@@ -18,72 +18,62 @@ func TestJSONParser_Parse(t *testing.T) {
 
 			name: "directive",
 			bytes: []byte(`
-[
-  {
-    "ThreadsPerChild": "250"
-  }
-]
+{
+  "LoadFile": [
+    "C:/www/php5/php5ts.dll",
+    "C:/www/php7/php7ts.dll"
+  ]
+}
+
 			`),
-			want:    "ThreadsPerChild 250\n",
+			want:    "LoadFile C:/www/php5/php5ts.dll\nLoadFile C:/www/php7/php7ts.dll\n",
 			wantErr: false,
 		},
 		{
 
 			name: "single section",
 			bytes: []byte(`
-[
-  {
-    "IfDefine": {
-      "SSL": [
-        {
-          "LoadModule": "ssl_module modules/mod_ssl.so"
-        }
+{
+  "IfModule": {
+    "ssl_module": {
+      "Include": [
+        "conf/extra/httpd-ssl.conf"
+      ],
+      "SSLRandomSeed": [
+        "startup builtin",
+        "connect builtin"
       ]
     }
   }
-]
-			`),
-			want:    "<IfDefine SSL>\n    LoadModule ssl_module modules/mod_ssl.so\n</IfDefine>\n",
+}`),
+			want:    "<IfModule ssl_module>\n    Include conf/extra/httpd-ssl.conf\n    SSLRandomSeed startup builtin\n    SSLRandomSeed connect builtin\n</IfModule>\n",
 			wantErr: false,
 		},
 		{
 
 			name: "recursive section",
 			bytes: []byte(`
-[
-  {
-    "IfModule": {
-      "!php5_module": [
+{
+  "IfModule": {
+    "php5_module": {
+      "Location": [
         {
-          "IfModule": {
-            "!php4_module": [
-              {
-                "Location": {
-                  "/": [
-                    {
-                      "FilesMatch": {
-                        "\".php[45]?$\"": [
-                          {
-                            "Order": "allow,deny"
-                          },
-                          {
-                            "Deny": "from all"
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              }
+          "/": {
+            "AddHandler": [
+              "application/x-httpd-php .php",
+              "application/x-httpd-php-source .phps"
+            ],
+            "AddType": [
+              "text/html .php .phps"
             ]
           }
         }
       ]
     }
   }
-]
+}
 			`),
-			want:    "<IfModule !php5_module>\n    <IfModule !php4_module>\n        <Location />\n            <FilesMatch \".php[45]?$\">\n                Order allow,deny\n                Deny from all\n            </FilesMatch>\n        </Location>\n    </IfModule>\n</IfModule>\n",
+			want:    "<IfModule php5_module>\n    <Location />\n        AddHandler application/x-httpd-php .php\n        AddHandler application/x-httpd-php-source .phps\n        AddType text/html .php .phps\n    </Location>\n</IfModule>\n",
 			wantErr: false,
 		},
 		{

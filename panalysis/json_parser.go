@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 )
 
@@ -26,21 +27,55 @@ func (p *JSONParser) parse() (interface{}, error) {
 		return nil, err
 	}
 	switch av := j.(type) {
-	case []interface{}:
-		for _, bv := range av {
+	case map[string]interface{}:
+		for bk, bv := range av {
 			switch cv := bv.(type) {
-			case map[string]interface{}:
-				for dk, dv := range cv {
+			// line directive
+			case []interface{}:
+				sortkeys := []string{}
+				for _, dv := range cv {
 					switch ev := dv.(type) {
-					case map[string]interface{}:
-						err := directive(dk, ev, &result, 0)
-						if err != nil {
-							return nil, err
-						}
 					case string:
-						result += fmt.Sprintf("%s %s\n", dk, ev)
-					default:
-						return nil, fmt.Errorf("config format error")
+						sortkeys = append(sortkeys, ev)
+					}
+				}
+
+				sort.Strings(sortkeys)
+
+				for _, sv := range sortkeys {
+					for _, dv := range cv {
+						switch ev := dv.(type) {
+						case string:
+							if sv != ev {
+								continue
+							}
+							result += fmt.Sprintf("%s %s\n", bk, ev)
+						default:
+							return nil, fmt.Errorf("config format error")
+						}
+					}
+				}
+			// single directive
+			case map[string]interface{}:
+				sortkeys := []string{}
+				for dk, _ := range cv {
+					sortkeys = append(sortkeys, dk)
+				}
+				sort.Strings(sortkeys)
+				for _, sv := range sortkeys {
+					for dk, dv := range cv {
+						if sv != dk {
+							continue
+						}
+						switch ev := dv.(type) {
+						case map[string]interface{}:
+							err := directive(bk, dk, ev, &result, 0)
+							if err != nil {
+								return nil, err
+							}
+						default:
+							return nil, fmt.Errorf("config format error")
+						}
 					}
 				}
 			default:
@@ -53,38 +88,51 @@ func (p *JSONParser) parse() (interface{}, error) {
 	return result, nil
 }
 
-func directive(name string, value map[string]interface{}, result *string, recCnt int) error {
-	for k, v := range value {
-		*result += fmt.Sprintf("%s<%s %s>\n", strings.Repeat(strings.Repeat(" ", 4), recCnt), name, k)
-		switch av := v.(type) {
-		case []interface{}:
-			for _, bv := range av {
-				switch cv := bv.(type) {
-				case map[string]interface{}:
-					for dk, dv := range cv {
-						switch ev := dv.(type) {
-						case map[string]interface{}:
-							recCnt++
-							err := directive(dk, ev, result, recCnt)
-							if err != nil {
-								return err
-							}
-							recCnt--
-						case string:
-							*result += fmt.Sprintf("%s%s %s\n", strings.Repeat(strings.Repeat(" ", 4), recCnt+1), dk, ev)
-						default:
-							return fmt.Errorf("config format error")
-						}
-					}
-				default:
-					return fmt.Errorf("config format error")
-				}
+func directive(directiveName string, directiveValue string, innerValue map[string]interface{}, result *string, recCnt int) error {
+	*result += fmt.Sprintf("%s<%s %s>\n", strings.Repeat(strings.Repeat(" ", 4), recCnt), directiveName, directiveValue)
+	sortkeys := []string{}
+	for k, _ := range innerValue {
+		sortkeys = append(sortkeys, k)
+	}
+	sort.Strings(sortkeys)
+	for _, sv := range sortkeys {
+		for k, v := range innerValue {
+			if sv != k {
+				continue
 			}
-		default:
-			return fmt.Errorf("config format error")
+			switch av := v.(type) {
+			case []interface{}:
+				for _, bv := range av {
+					switch cv := bv.(type) {
+					case string:
+						*result += fmt.Sprintf("%s%s %s\n", strings.Repeat(strings.Repeat(" ", 4), recCnt+1), k, cv)
+					case map[string]interface{}:
+						for dk, dv := range cv {
+							switch ev := dv.(type) {
+							// recursive
+							case map[string]interface{}:
+								recCnt++
+								err := directive(k, dk, ev, result, recCnt)
+								if err != nil {
+									return err
+								}
+								recCnt--
+							case string:
+								*result += fmt.Sprintf("%s%s %s\n", strings.Repeat(strings.Repeat(" ", 4), recCnt+1), dk, ev)
+							default:
+								return fmt.Errorf("config format error")
+							}
+						}
+					default:
+						return fmt.Errorf("config format error")
+					}
+				}
+			default:
+				return fmt.Errorf("config format error")
+			}
 		}
 	}
-	*result += fmt.Sprintf("%s</%s>\n", strings.Repeat(strings.Repeat(" ", 4), recCnt), name)
+	*result += fmt.Sprintf("%s</%s>\n", strings.Repeat(strings.Repeat(" ", 4), recCnt), directiveName)
 	return nil
 
 }

@@ -16,9 +16,12 @@ func TestConfigParser_Parse(t *testing.T) {
 	}{
 		{
 
-			name:    "directive",
-			bytes:   []byte(`LoadFile "C:/www/php5/php5ts.dll"`),
-			want:    `[{"LoadFile":"\"C:/www/php5/php5ts.dll\""}]`,
+			name: "directive",
+			bytes: []byte(`
+			LoadFile "C:/www/php5/php5ts.dll"
+			LoadFile "C:/www/php7/php7ts.dll"
+			`),
+			want:    `{"LoadFile":["\"C:/www/php5/php5ts.dll\"","\"C:/www/php7/php7ts.dll\""]}`,
 			wantErr: false,
 		},
 		{
@@ -31,7 +34,23 @@ func TestConfigParser_Parse(t *testing.T) {
 	SSLRandomSeed connect builtin
 </IfModule>
 			`),
-			want:    "[{\"IfModule\":{\"ssl_module\":[{\"Include\":\"conf/extra/httpd-ssl.conf\"},{\"SSLRandomSeed\":\"startup builtin\"},{\"SSLRandomSeed\":\"connect builtin\"}]}}]",
+			want:    `{"IfModule":{"ssl_module":{"Include":["conf/extra/httpd-ssl.conf"],"SSLRandomSeed":["startup builtin","connect builtin"]}}}`,
+			wantErr: false,
+		},
+		{
+
+			name: "multi section",
+			bytes: []byte(`
+<IfModule ssl_module>
+	Include conf/extra/httpd-ssl.conf
+	SSLRandomSeed startup builtin
+	SSLRandomSeed connect builtin
+</IfModule>
+<IfModule mod_test_module>
+	TestName value
+</IfModule>
+			`),
+			want:    `{"IfModule":{"mod_test_module":{"TestName":["value"]},"ssl_module":{"Include":["conf/extra/httpd-ssl.conf"],"SSLRandomSeed":["startup builtin","connect builtin"]}}}`,
 			wantErr: false,
 		},
 		{
@@ -49,7 +68,7 @@ func TestConfigParser_Parse(t *testing.T) {
 
 </IfModule>
 			`),
-			want:    "[{\"IfModule\":{\"php5_module\":[{\"Location\":{\"/\":[{\"AddType\":\"text/html .php .phps\"},{\"AddHandler\":\"application/x-httpd-php .php\"},{\"AddHandler\":\"application/x-httpd-php-source .phps\"}]}}]}}]",
+			want:    `{"IfModule":{"php5_module":{"Location":[{"/":{"AddHandler":["application/x-httpd-php .php","application/x-httpd-php-source .phps"],"AddType":["text/html .php .phps"]}}]}}}`,
 			wantErr: false,
 		},
 		{

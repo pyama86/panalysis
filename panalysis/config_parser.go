@@ -34,7 +34,7 @@ func init() {
 }
 
 func (p *ConfigParser) parse(parentSection interface{}, sec interface{}, secName, secVal string) (interface{}, error) {
-	var result []interface{}
+	var result interface{}
 	var secCnt int
 	for p.s.Scan() {
 		line := p.s.Text()
@@ -43,54 +43,79 @@ func (p *ConfigParser) parse(parentSection interface{}, sec interface{}, secName
 			continue
 		} else if res := regSectionStart.FindAllStringSubmatch(line, -1); res != nil {
 			secCnt++
-			// 再帰処理
+			// recursive
 			if sec != nil {
 				localSecName := res[0][1]
 				localSecVal := res[0][2]
-				c := map[string]map[string][]interface{}{
-					localSecName: map[string][]interface{}{
-						localSecVal: []interface{}{},
+				c := map[string]map[string]map[string][]interface{}{
+					localSecName: map[string]map[string][]interface{}{
+						localSecVal: map[string][]interface{}{},
 					},
 				}
 
-				if _, err := p.parse(sec, &c, localSecName, localSecVal); err != nil {
+				if _, err := p.parse(sec, c, localSecName, localSecVal); err != nil {
 					return nil, err
 				}
-
 				switch v := sec.(type) {
-				case map[string]map[string][]interface{}:
-					v[secName][secVal] = append(v[secName][secVal], c)
-				case *map[string]map[string][]interface{}:
-					(*v)[secName][secVal] = append((*v)[secName][secVal], c)
+				case map[string]map[string]map[string][]interface{}:
+					if v[secName][secVal] == nil {
+						v[secName][secVal] = map[string][]interface{}{}
+					}
+					v[secName][secVal][localSecName] = append(v[secName][secVal][localSecName], c[localSecName])
+
 				}
 				secCnt--
 			} else {
 				secName = res[0][1]
 				secVal = res[0][2]
-				sec = map[string]map[string][]interface{}{
-					secName: map[string][]interface{}{
+				sec = map[string]map[string]map[string][]interface{}{
+					secName: map[string]map[string][]interface{}{
 						secVal: nil,
 					},
 				}
 			}
-		} else if regSectionEnd.MatchString(line) {
+		} else if res := regSectionEnd.FindAllStringSubmatch(line, -1); res != nil {
 			if parentSection != nil {
 				return nil, nil
 			} else {
 				secCnt--
-				result = append(result, sec)
+				if result == nil {
+					result = sec
+				} else {
+					switch v := result.(type) {
+					case map[string]map[string]map[string][]interface{}:
+						switch vv := sec.(type) {
+						case map[string]map[string]map[string][]interface{}:
+							for k, vvv := range vv {
+								for kk, vvvv := range vvv {
+									v[k][kk] = vvvv
+								}
+							}
+						}
+					}
+				}
 			}
 			sec = nil
 		} else if res := regDirective.FindAllStringSubmatch(line, -1); res != nil {
 			localSecName := res[0][1]
 			localSecVal := res[0][2]
-			switch v := sec.(type) {
-			case map[string]map[string][]interface{}:
-				v[secName][secVal] = append(v[secName][secVal], map[string]interface{}{localSecName: localSecVal})
-			case *map[string]map[string][]interface{}:
-				(*v)[secName][secVal] = append((*v)[secName][secVal], map[string]interface{}{localSecName: localSecVal})
-			default:
-				result = append(result, map[string]interface{}{localSecName: localSecVal})
+			if sec == nil && result != nil {
+				// single directive
+				switch v := result.(type) {
+				case map[string][]interface{}:
+					v[localSecName] = append(v[localSecName], localSecVal)
+				}
+			} else {
+				switch v := sec.(type) {
+				case map[string]map[string]map[string][]interface{}:
+					if v[secName][secVal] == nil {
+						v[secName][secVal] = map[string][]interface{}{}
+					}
+					v[secName][secVal][localSecName] = append(v[secName][secVal][localSecName], localSecVal)
+				default:
+					// single directive
+					result = map[string][]interface{}{localSecName: []interface{}{localSecVal}}
+				}
 			}
 		}
 	}
@@ -103,3 +128,15 @@ func (p *ConfigParser) parse(parentSection interface{}, sec interface{}, secName
 	}
 	return string(js), p.s.Err()
 }
+
+//func merge(m1, m2 map[string]interface{}) map[string]interface{} {
+//	ans := map[string]string{}
+//
+//	for k, v := range m1 {
+//		ans[k] = v
+//	}
+//	for k, v := range m2 {
+//		ans[k] = v
+//	}
+//	return (ans)
+//}
